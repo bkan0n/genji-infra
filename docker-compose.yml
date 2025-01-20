@@ -19,8 +19,8 @@ x-environment-glitch-tip: &default-environment-glitchtip
     - ENABLE_USER_REGISTRATION=false
 
 x-depends_on: &default-depends_on
-  - postgres
-  - redis
+  - glitchtip-postgres
+  - glitchtip-redis
 
 services:
   genji-lust:
