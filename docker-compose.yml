@@ -8,7 +8,7 @@ x-genji-networks: &genji-networks
 
 x-environment-glitch-tip: &default-environment-glitchtip
   environment:
-    - DATABASE_URL=${DATABASE_URL_BASE}/glitchtip
+    - DATABASE_URL=${DATABASE_URL}/glitchtip
     - SECRET_KEY # best to run openssl rand -hex 32
     - PORT # If changing, change the web service port too
     - SENDGRID_API_KEY
@@ -112,7 +112,7 @@ services:
       - POSTGRES_PASSWORD
       - POSTGRES_PORT
     depends_on:
-      genji-db:
+      genji-postgres:
         condition: service_healthy
     <<: [*base-settings, *genji-networks]
 
@@ -158,7 +158,7 @@ services:
     image: ghcr.io/umami-software/umami:postgresql-latest
     container_name: umami
     environment:
-      - DATABASE_URL=${DATABASE_URL_BASE}/analytics # TODO see if glitch tip can go in this database as well. concat /dbname to the end of secrets?
+      - DATABASE_URL=${DATABASE_URL}/analytics # TODO see if glitch tip can go in this database as well. concat /dbname to the end of secrets?
       - DATABASE_TYPE=postgresql
       - APP_SECRET
     init: true
