@@ -1,10 +1,26 @@
 x-base-settings: &base-settings
-  restart: always
+  restart: unless-stopped
 
 x-genji-networks: &genji-networks
   networks:
     - genji-network
     - caddy-network
+
+x-environment-glitch-tip: &default-environment-glitchtip
+  environment:
+    - DATABASE_URL=${DATABASE_URL_BASE}/glitchtip
+    - SECRET_KEY # best to run openssl rand -hex 32
+    - PORT # If changing, change the web service port too
+    - SENDGRID_API_KEY
+    - EMAIL_BACKEND
+    - GLITCHTIP_DOMAIN # Change this to your domain
+    - DEFAULT_FROM_EMAIL # Change this to your email
+    - CELERY_WORKER_AUTOSCALE="1,3" # Scale between 1 and 3 to prevent excessive memory usage. Change it or remove to set it to the number of cpu cores.
+    - ENABLE_USER_REGISTRATION=false
+
+x-depends_on: &default-depends_on
+  - postgres
+  - redis
 
 services:
   genji-lust:
@@ -54,12 +70,12 @@ services:
       # - LT_CHAR_LIMIT=1200
       - LT_API_KEYS_DB_PATH=/app/db/api_keys.db
     healthcheck:
-      test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
+      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
     volumes:
       - /opt/libretranslate/data/keys:/app/db:rw
       - /opt/libretranslate/data/local:/home/libretranslate/.local:rw
 
-  genji-db:
+  genji-postgres:
     container_name: genji-postgres
     build:
       context: ./database
@@ -78,12 +94,12 @@ services:
       timeout: 5s
       retries: 5
 
-  genji-backup:
+  genji-pg-backup-utility:
     image: eeshugerman/postgres-backup-s3:16
     container_name: genji-pg-backup-utility
     environment:
-      - SCHEDULE='@daily'     # optional
-      - BACKUP_KEEP_DAYS=7     # optional
+      - SCHEDULE='@daily' # optional
+      - BACKUP_KEEP_DAYS=7 # optional
       - S3_REGION
       - S3_ACCESS_KEY_ID
       - S3_SECRET_ACCESS_KEY
@@ -100,12 +116,63 @@ services:
         condition: service_healthy
     <<: [*base-settings, *genji-networks]
 
+  glitchtip-postgres:
+    container_name: glitchtip-postgres
+    image: postgres:17
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "trust" # Consider removing this and setting a password
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    <<: [*base-settings, *genji-networks]
 
+  glitchtip-redis:
+    container_name: glitchtip-redis
+    image: valkey/valkey
+    <<: [*base-settings, *genji-networks]
 
+  glitchtip-web:
+    container_name: glitchtip-web
+    image: glitchtip/glitchtip
+    depends_on: *default-depends_on
+    volumes:
+      - uploads:/code/uploads
+    <<: [*base-settings, *default-environment-glitchtip, *genji-networks]
 
+  glitchtip-worker:
+    container_name: glitchtip-worker
+    image: glitchtip/glitchtip
+    command: ./bin/run-celery-with-beat.sh
+    depends_on: *default-depends_on
+    volumes:
+      - uploads:/code/uploads
+    <<: [*base-settings, *default-environment-glitchtip, *genji-networks]
 
+  glitchtip-migrate:
+    container_name: glitchtip-migrate
+    image: glitchtip/glitchtip
+    depends_on: *default-depends_on
+    command: ./bin/run-migrate.sh
+    <<: [*default-environment-glitchtip, *genji-networks]
 
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: umami
+    environment:
+      - DATABASE_URL=${DATABASE_URL_BASE}/analytics # TODO see if glitch tip can go in this database as well. concat /dbname to the end of secrets?
+      - DATABASE_TYPE=postgresql
+      - APP_SECRET
+    init: true
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:3000/api/heartbeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    <<: [*base-settings, *genji-networks]
 
+volumes:
+  umami-db-data:
+  pg-data:
+  uploads:
 
 networks:
   caddy-network:
