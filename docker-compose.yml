@@ -1,3 +1,5 @@
+name: genji-infra
+
 x-base-settings: &base-settings
   restart: unless-stopped
 
@@ -98,7 +100,7 @@ services:
     image: eeshugerman/postgres-backup-s3:16
     container_name: genji-pg-backup-utility
     environment:
-      - SCHEDULE='@daily' # optional
+      - SCHEDULE=@daily # optional
       - BACKUP_KEEP_DAYS=7 # optional
       - S3_REGION
       - S3_ACCESS_KEY_ID
