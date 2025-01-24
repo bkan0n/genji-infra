@@ -1,6 +1,6 @@
 FROM libretranslate/libretranslate:latest
 
-USER 1000:1000
+USER libretranslate
 
 WORKDIR /app
 
@@ -8,6 +8,7 @@ COPY ./libretranslate_startup.sh .
 
 EXPOSE 5000
 
-ENTRYPOINT ["/usr/bin/env"]
+# ENTRYPOINT ["/usr/bin/env"]
 
-CMD [ "bash", "./libretranslate_startup.sh" ]
+# CMD [ "bash", "./libretranslate_startup.sh" ]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
