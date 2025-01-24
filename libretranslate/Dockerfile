@@ -8,7 +8,6 @@ COPY ./libretranslate_startup.sh .
 
 EXPOSE 5000
 
-# ENTRYPOINT ["/usr/bin/env"]
+ENTRYPOINT ["/usr/bin/env"]
 
-# CMD [ "bash", "./libretranslate_startup.sh" ]
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+CMD [ "bash", "./libretranslate_startup.sh" ]
