@@ -77,6 +77,15 @@ services:
       - /home/nebula/bkan0n/appdata/libretranslate/keys:/app/db:rw
       - /home/nebula/bkan0n/appdata/libretranslate/local:/home/libretranslate/.local:rw
 
+  bytebase:
+    init: true
+    container_name: bytebase
+    pull_policy: always
+    volumes:
+      - ~/.bytebase/data:/var/opt/bytebase
+    image: bytebase/bytebase:3.6.0
+    <<: [*base-settings, *genji-networks]
+
   genji-postgres:
     container_name: genji-postgres
     build:
