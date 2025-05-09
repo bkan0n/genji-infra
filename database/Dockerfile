@@ -1,2 +1,2 @@
-FROM caotangdaiduong/postgresql:16.2.0-debian-12-r8
+FROM postgres:16.3
 COPY load-extensions.sh /docker-entrypoint-initdb.d/
