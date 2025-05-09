@@ -1,3 +1,2 @@
-FROM commongroundproject/postgres-wal2json:16
+FROM postgres:16.3
 COPY load-extensions.sh /docker-entrypoint-initdb.d/
-
