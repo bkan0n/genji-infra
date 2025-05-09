@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     git \
     build-essential \
     libxml2-dev \
-    clang-15 llvm-15 \
+    postgresql-server-dev-16 \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build wal2json
